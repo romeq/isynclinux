@@ -1,6 +1,11 @@
 # isynclinux
 
-A simple (SLOC ~ 220)
+A simple (SLOC ~ 220) syncer for iCloud on Linux platforms.
+
+
+## Motivation
+
+I couldn't find such program online so I created my own with PyiCloud
 
 
 > **Note**  
@@ -19,7 +24,9 @@ pip install -r requirements.txt
 # Save password to keyring (optional)
 # If you don't save it you'll have to enter it everytime
 icloud --username=<your icloud email>
-export PYICLOUD_PASSWORD=true # only export this variable if the password is in keyring
+# only export this variable if the password is in keyring
+# it might be a good idea to add this line to .bashrc
+export PYICLOUD_PASSWORD=true 
 
 # Sync files to ~/iCloud
 ./main.py ~/iCloud 
