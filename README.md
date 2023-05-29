@@ -2,7 +2,7 @@
 
 > **Note**  
 > This repository is work-in-progress, and only supports downloading for now.
-> Updates are expected while I have free time.
+> Updates are expected when I have free time.
 
 
 A simple (SLOC ~ 220) syncer for iCloud on Linux platforms.
