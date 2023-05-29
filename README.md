@@ -1,16 +1,16 @@
 # isynclinux
 
+> **Note**  
+> This repository is work-in-progress, and only supports downloading for now.
+> Updates are expected while I have free time.
+
+
 A simple (SLOC ~ 220) syncer for iCloud on Linux platforms.
 
 
 ## Motivation
 
 I couldn't find such program online so I created my own with PyiCloud
-
-
-> **Note**  
-> This repository is work-in-progress!
-
 
 
 Sync your iCloud to a Linux folder 
