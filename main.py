@@ -1,12 +1,14 @@
 #!/bin/python3
 from getpass import getpass
-import json
-from re import A
-import click
+import os
+from shutil import copyfileobj
 import sys
+from pathlib import Path
+import click
+from shutil import copyfileobj
 from pyicloud import PyiCloudService
 from os.path import expanduser
-from os import environ
+from os import environ, stat
 
 USERNAME_CACHE_FILE = ".username"
 
@@ -49,7 +51,7 @@ def get_env(key: str) -> str:
 def authenticate_2fa(api: PyiCloudService) -> int:
     if api.requires_2fa:
         code = input(
-            "Enter the code you received of one of your approved devices: ")
+            "Enter the code you received in one of your approved devices: ")
         result = api.validate_2fa_code(code)
 
         if not result:
@@ -59,13 +61,10 @@ def authenticate_2fa(api: PyiCloudService) -> int:
         if not api.is_trusted_session:
             print("Session is not trusted. Requesting trust...")
             result = api.trust_session()
-            print("Session trust result %s" % result)
 
             if not result:
                 print(
                     "Failed to request trust. You will likely be prompted for the code again in the coming weeks")
-    elif api.requires_2sa:
-        print("Two-step authentication required. Your trusted devices are:")
 
         devices = api.trusted_devices
         for i, device in enumerate(devices):
@@ -88,24 +87,106 @@ def authenticate_2fa(api: PyiCloudService) -> int:
     return 0
 
 
-def list_files_recursive(folder, current_path=""):
-    files = folder.get_children()
-    if not files:
-        return []
+amount_of_files = []
 
+
+def list_files_recursive(folder, current_path=""):
+    icloud_file_list = []
+    files = folder.get_children()
     for file in files:
-        if file.type == "folder" or file.type == "app_directory":
+        if file.type == "folder" or file.type == "app_library":
             new_path = f"{current_path}/{file.name}" if current_path else file.name
-            list_files_recursive(file, new_path)
+            files_in_subfolder = list_files_recursive(file, new_path)
+            icloud_file_list.extend(files_in_subfolder)
+
         elif file.type == "file":
             file_path = f"{current_path}/{file.name}" if current_path else file.name
-            print(file_path)
+            icloud_file_list.append(file_path)
+            amount_of_files.append(1)
+            print("\033[32mFound\033[0m {} files\t".format(
+                sum(amount_of_files)), end="\r")
+
+    return icloud_file_list
 
 
-def sync_icloud_files_to(api: PyiCloudService, sync_dir: str):
+def sync_icloud_files_to(api: PyiCloudService, sync_dir: str) -> int:
+    sync_dir = expanduser(sync_dir)
+    if sync_dir == "":
+        print("No sync directory specified")
+        return 1
+    elif sync_dir == "/":
+        print("Cannot sync to root")
+        return 1
+    elif not os.path.isdir(sync_dir):
+        print("Sync path does not exist or is not a directory")
+        return 1
+
     # Retrieve the root folder from iCloud Drive
     root_folder = api.drive.root
-    list_files_recursive(root_folder, "")
+    if root_folder is None:  # if root folder is empty
+        return 1
+
+    icloud_file_list = list_files_recursive(root_folder, "")
+    print()
+
+    files_synced = 0
+
+    f = open("icloud-file-list.txt", "w")
+    f.write("\n".join(icloud_file_list))
+    f.close()
+
+    for file in icloud_file_list:
+        files_synced += 1
+        path_split = file.split("/")
+
+        percent_done = round(files_synced / len(icloud_file_list) * 100, 2)
+        print(
+            f"\033[32mSyncing\033[0m {files_synced} of {len(icloud_file_list)} ({percent_done}%)\t", end="\r")
+
+        # If the file is in the root folder
+        if len(path_split) == 1:
+            drive_file = root_folder[path_split[0]]
+            if not drive_file:
+                continue
+
+            response = drive_file.open(stream=True)
+            file_out = open(sync_dir + "/" + drive_file.name, 'wb')
+            copyfileobj(response.raw, file_out)
+            file_out.close()
+
+            continue
+
+        file_parent_folders = path_split[:len(path_split) - 1]
+        current_folder = api.drive.root
+
+        subdir_to_create = "/".join(file_parent_folders)
+        file_sync_dir = "/".join([sync_dir, subdir_to_create])
+
+        Path(file_sync_dir).mkdir(parents=True, exist_ok=True)
+
+        for folder in file_parent_folders:
+            tmp_current = current_folder[folder]
+            if not tmp_current:
+                continue
+            current_folder = tmp_current
+
+        filename = path_split[len(path_split) - 1]
+        drive_file = current_folder[filename]
+        if not drive_file:
+            continue
+
+        file_name = f"{file_sync_dir}/{drive_file.name}"
+        try:
+            if stat(file_name).st_size == drive_file.size:
+                continue
+        except FileNotFoundError:
+            pass  # file doesn't exist, download it
+
+        response = drive_file.open(stream=True)
+        file_out = open(file_name, 'wb')
+        copyfileobj(response.raw, file_out)
+        file_out.close()
+    return 0
 
 
 def main() -> int:
@@ -124,7 +205,9 @@ def main() -> int:
     if len(sys.argv) > 1:
         sync_dir = sys.argv[1]
 
-    sync_icloud_files_to(api, sync_dir)
+    if sync_icloud_files_to(api, sync_dir) > 0:
+        return 1
+    print("\n\033[32mSyncing\033[0m succeeded!")
 
     return 0
 
