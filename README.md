@@ -12,8 +12,11 @@ A simple (SLOC ~ 220) syncer for iCloud on Linux platforms.
 
 I couldn't find such program online so I created my own with PyiCloud
 
-
-Sync your iCloud to a Linux folder 
+## Features
+- [x] Download currently existing version
+- [ ] Upload files
+- [ ] Handle files/directories that don't exist on server anymore
+- [ ] Automatic syncing (either event-based or by looping)
 
 ## Installation
 
