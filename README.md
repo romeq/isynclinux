@@ -17,6 +17,7 @@ I couldn't find such program online so I created my own with PyiCloud
 - [ ] Upload files
 - [ ] Handle files/directories that don't exist on server anymore
 - [ ] Automatic syncing (either event-based or by looping)
+- [ ] Virtual files support
 
 ## Installation
 
