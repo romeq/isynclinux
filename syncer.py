@@ -7,7 +7,8 @@ from os.path import expanduser
 from os import environ
 from sync_service import SyncService
 
-USERNAME_CACHE_FILE = ".username"
+
+USERNAME_CACHE_FILE = expanduser("~/.username")
 
 
 def get_input_or_fallback_file(prompt, fallback_file):
@@ -82,9 +83,6 @@ def authenticate_2fa(api: PyiCloudService) -> int:
             return 1
 
     return 0
-
-
-amount_of_files = []
 
 
 def main() -> int:
