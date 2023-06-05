@@ -5,7 +5,7 @@ from getpass import getpass
 USERNAME_CACHE_FILE = expanduser("~/.username")
 
 
-def get_input_or_fallback_file(prompt, fallback_file):
+def get_input_or_fallback_file(prompt: str, fallback_file: str):
     try:
         f = open(fallback_file, "r")
         username = f.read()

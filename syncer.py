@@ -1,4 +1,5 @@
 #!/bin/python3
+from os import getenv
 import sys
 import click
 from pyicloud import PyiCloudService
@@ -46,18 +47,22 @@ def authenticate_2fa(api: PyiCloudService) -> int:
 
 
 def main() -> int:
-    has_password_been_saved_to_keyring = get_env("PYICLOUD_PASSWORD") != ""
-    username, password = get_credinteals(has_password_been_saved_to_keyring)
+    is_password_saved_to_keyring = get_env("PYICLOUD_PASSWORD") != ""
+    username, password = get_credinteals(is_password_saved_to_keyring)
 
-    if has_password_been_saved_to_keyring:
+    if is_password_saved_to_keyring:
         api = PyiCloudService(username)
     else:
         api = PyiCloudService(username, password)
 
-    if authenticate_2fa(api) > 0:
+    try:
+        if authenticate_2fa(api) > 0:
+            return 1
+    except:
+        print("Failed to authenticate")
         return 1
 
-    sync_dir = expanduser("~/.icloud-sync")
+    sync_dir = expanduser(getenv("ICLOUD_SYNC_DIR") or "~/iCloud-sync")
     if len(sys.argv) > 1:
         sync_dir = sys.argv[1]
 
