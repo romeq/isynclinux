@@ -18,6 +18,7 @@ I couldn't find such program online so I created my own with PyiCloud
 - [ ] Handle files/directories that don't exist on server anymore
 - [ ] Automatic syncing (either event-based or by looping)
 - [ ] Virtual files support
+- [ ] For some reason the file discovery is slow as hell, so try to share the work between multiple threads
 
 ## Installation
 
