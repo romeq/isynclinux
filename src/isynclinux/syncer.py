@@ -1,10 +1,11 @@
 #!/bin/python3
 from os import getenv
+from os.path import isfile
 import sys
 import click
 from pyicloud import PyiCloudService
-from sync_service import SyncService
-from utils import *
+from .sync_service import SyncService
+from .utils import *
 
 
 def authenticate_2fa(api: PyiCloudService) -> int:
@@ -66,7 +67,11 @@ def main() -> int:
     if len(sys.argv) > 1:
         sync_dir = sys.argv[1]
 
-    service = SyncService(api)
+    
+    ignored_folders = read_ignored_folders(get_config_file(IGNORE_FILE))
+    file_list_cache_file = get_config_file(".cache.files")
+
+    service = SyncService(api, file_list_cache_file, ignored_folders, getenv("ISYNCLINUX_VERBOSE")=="1")
     if service.sync_icloud_drive_to_disk(sync_dir) > 0:
         return 1
 
