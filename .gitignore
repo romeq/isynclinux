@@ -2,5 +2,5 @@ bin/
 include/
 lib/
 lib64
-src/isynclinux.egg-info
+*.egg-info
 pyvenv.cfg

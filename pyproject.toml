@@ -8,3 +8,7 @@ dependencies = ["click==8.1.3", "pyicloud==1.0.0"]
 
 [project.scripts]
 isynclinux = "isynclinux.syncer:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
