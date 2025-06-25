@@ -24,15 +24,8 @@ I couldn't find such program online so I created my own with PyiCloud
 
 ```sh
 git clone git@github.com:romeq/isynclinux && cd isynclinux
-pip install -r requirements.txt
-
-# Save password to keyring (optional)
-# If you don't save it you'll have to enter it everytime
-icloud --username=<your icloud email>
-# only export this variable if the password is in keyring
-# it might be a good idea to add this line to .bashrc
-export PYICLOUD_PASSWORD=true 
+pipx install . 
 
 # Sync files to ~/iCloud
-./main.py ~/iCloud 
+isynclinux ~/iCloud 
 ```
