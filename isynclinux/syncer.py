@@ -1,6 +1,5 @@
 #!/bin/python3
 from os import getenv
-from os.path import isfile
 import sys
 import click
 from pyicloud import PyiCloudService
