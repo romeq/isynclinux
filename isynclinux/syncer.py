@@ -1,16 +1,15 @@
 #!/bin/python3
-from os import getenv
 import sys
 import click
 from pyicloud import PyiCloudService
+from rich.console import Console
 from .sync_service import SyncService
 from .utils import *
 
 
 def authenticate_2fa(api: PyiCloudService) -> int:
     if api.requires_2fa:
-        code = input(
-            "Enter the code you received in one of your approved devices: ")
+        code = input("Enter the code you received in one of your approved devices: ")
         result = api.validate_2fa_code(code)
 
         if not result:
@@ -45,38 +44,38 @@ def authenticate_2fa(api: PyiCloudService) -> int:
 
     return 0
 
+# TODO: Click options
+@click.command()
+@click.argument("sync_dir", envvar="ISYNCLINUX_DIR")
+@click.option("--update", "-u", flag_value=True)
+@click.option("--verbose", "-v", flag_value=True, envvar="ISYNCLINUX_VERBOSE")
+def main(sync_dir: str, update: bool, verbose: bool) -> int:
+    richcl = Console()
 
-def main() -> int:
-    is_password_saved_to_keyring = get_env("PYICLOUD_PASSWORD") != ""
-    username, password = get_credinteals(is_password_saved_to_keyring)
+    username, password = get_credinteals()
 
-    if is_password_saved_to_keyring:
-        api = PyiCloudService(username)
-    else:
-        api = PyiCloudService(username, password)
+    login_status = richcl.status("Logging in...")
+    login_status.start()
+    api = PyiCloudService(username, password)
+    login_status.stop()
+    richcl.log("[green]Logged in, proceeding...")
 
     try:
         if authenticate_2fa(api) > 0:
-            return 1
+            sys.exit(1)
     except:
         print("Failed to authenticate")
-        return 1
+        sys.exit(1)
 
-    sync_dir = expanduser(getenv("ICLOUD_SYNC_DIR") or "~/iCloud-sync")
-    if len(sys.argv) > 1:
-        sync_dir = sys.argv[1]
-
-    
     ignored_folders = read_ignored_folders(get_config_file(IGNORE_FILE))
     file_list_cache_file = get_config_file(".cache.files")
 
-    service = SyncService(api, file_list_cache_file, ignored_folders, getenv("ISYNCLINUX_VERBOSE")=="1")
+    service = SyncService(api, verbose)
+    service.file_list_cache_file = file_list_cache_file
+    service.ignored_folders = ignored_folders
+    service.update = update
     if service.sync_icloud_drive_to_disk(sync_dir) > 0:
-        return 1
+        sys.exit(1)
 
-    return 0
+    sys.exit(0)
 
-
-if __name__ == "__main__":
-    status_code = main()
-    sys.exit(status_code)

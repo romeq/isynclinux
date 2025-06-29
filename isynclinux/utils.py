@@ -1,4 +1,4 @@
-from os.path import expanduser, isdir
+from os.path import expanduser, isdir, isfile
 from os import environ, mkdir
 from getpass import getpass
 
@@ -33,12 +33,10 @@ def read_ignored_folders(ignore_file) -> list[str]:
         return []
 
 
-def get_credinteals(password_already_saved: bool):
+def get_credinteals():
     username_file = get_config_file(USERNAME_CACHE_FILE)
     username = get_input_or_fallback_file("Email: ", username_file)
-    if password_already_saved:
-        return username, ""
-    return username, getpass(f"Password for {username}: ")
+    return username, getpass(f"Password for {username}: ") if not isfile(username_file) else "-"
 
 
 def ask_yes_or_no(question_string: str, prefer_true: bool) -> bool:
