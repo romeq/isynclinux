@@ -2,3 +2,5 @@
 venv
 .idea
 isynclinux/__pycache__
+build/
+*.egg-info/
