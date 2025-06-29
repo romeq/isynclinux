@@ -5,7 +5,7 @@
 > Updates are expected when I have free time.
 
 
-A simple (SLOC ~ 220) syncer for iCloud on Linux platforms.
+A simple (SLOC < 300) syncer for iCloud on Linux platforms.
 
 
 ## Motivation
