@@ -2,7 +2,9 @@
 import sys
 import click
 from pyicloud import PyiCloudService
+import requests
 from rich.console import Console
+import os
 from .sync_service import SyncService
 from .utils import *
 
@@ -44,38 +46,76 @@ def authenticate_2fa(api: PyiCloudService) -> int:
 
     return 0
 
-# TODO: Click options
-@click.command()
+@click.group()
+def cli() -> None:
+    pass
+
+@cli.command()
 @click.argument("sync_dir", envvar="ISYNCLINUX_DIR")
-@click.option("--update", "-u", flag_value=True)
 @click.option("--verbose", "-v", flag_value=True, envvar="ISYNCLINUX_VERBOSE")
-def main(sync_dir: str, update: bool, verbose: bool) -> int:
-    richcl = Console()
+@click.option("--update-files", "-u", flag_value=True)
+def sync(sync_dir: str, update_files: bool, verbose: bool):
+    richcl = Console(log_time_format="")
 
     username, password = get_credinteals()
 
     login_status = richcl.status("Logging in...")
     login_status.start()
-    api = PyiCloudService(username, password)
-    login_status.stop()
-    richcl.log("[green]Logged in, proceeding...")
+    try:
+        api = PyiCloudService(username, password)
+    except requests.exceptions.ConnectionError:
+        login_status.stop()
+        richcl.log("[red]No internet connection")
+        sys.exit(1)
 
     try:
+        login_status.update("Authenticating 2FA...")
         if authenticate_2fa(api) > 0:
             sys.exit(1)
     except:
         print("Failed to authenticate")
         sys.exit(1)
 
+    login_status.stop()
+    richcl.log("[green]Logged in, proceeding...")
+
     ignored_folders = read_ignored_folders(get_config_file(IGNORE_FILE))
-    file_list_cache_file = get_config_file(".cache.files")
+    file_list_cache_file = get_config_file(FILES_CACHE_FILE)
 
     service = SyncService(api, verbose)
     service.file_list_cache_file = file_list_cache_file
     service.ignored_folders = ignored_folders
-    service.update = update
+    service.update = update_files
     if service.sync_icloud_drive_to_disk(sync_dir) > 0:
         sys.exit(1)
 
     sys.exit(0)
+
+
+@cli.command("ignore")
+@click.option("--verbose", "-v", flag_value=True, envvar="ISYNCLINUX_VERBOSE")
+@click.option("--edit", "-e", flag_value=True)
+def ignore(verbose: bool, edit: bool):
+    richcl = Console(highlight=False)
+
+    if not edit:
+        if verbose: richcl.log("Didn't find edit (-e/--edit) flag, dumping file")
+        ignored_folders_file = get_config_file(IGNORE_FILE)
+        fp = open(ignored_folders_file)
+        [print(ignored_folder_unstripped.strip()) for ignored_folder_unstripped in fp.readlines()]
+        return
+
+    default_editor = "nano"
+    editor = get_env("EDITOR")
+    if verbose: richcl.log(f"$EDITOR => '{editor}'")
+    if verbose and not editor: richcl.log(f"Couldn't read $EDITOR, continuing with default editor (={default_editor})")
+    if verbose and editor: richcl.log(f"Since $EDITOR exists and is not an empty string, using $EDITOR instead of default ({default_editor})")
+    if not editor:
+        editor = default_editor
+
+    ignored_folders_file = get_config_file(IGNORE_FILE)
+    if verbose: richcl.log(f"Got target file: {ignored_folders_file}")
+    if verbose: richcl.log(f"Running '{editor} {ignored_folders_file}'")
+    res = os.system(f"{editor} {ignored_folders_file}")
+    if verbose: richcl.log(f"Result: {res}")
 

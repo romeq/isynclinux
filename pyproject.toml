@@ -7,7 +7,7 @@ requires-python = ">=3.8"
 dependencies = ["click==8.1.3", "pyicloud==1.0.0", "rich==14.0.0"]
 
 [project.scripts]
-isynclinux = "isynclinux.syncer:main"
+isynclinux = "isynclinux.syncer:cli"
 
 [build-system]
 requires = ["setuptools"]

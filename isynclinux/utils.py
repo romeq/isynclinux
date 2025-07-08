@@ -3,6 +3,7 @@ from os import environ, mkdir
 from getpass import getpass
 
 USERNAME_CACHE_FILE = ".cache.username"
+FILES_CACHE_FILE = ".cache.files"
 IGNORE_FILE = "ignored_folders"
 
 def get_input_or_fallback_file(prompt: str, fallback_file: str):
@@ -27,9 +28,6 @@ def read_ignored_folders(ignore_file) -> list[str]:
         f.close()
         return lines
     except FileNotFoundError:
-        print("Ignore file not found, including all folders")
-        print("  tip: you can create an ignore file and list there all folders you don't want to include in sync.")
-        print(f"       it's located at {ignore_file}")
         return []
 
 

@@ -7,7 +7,6 @@
 
 A simple (SLOC < 300) syncer for iCloud on Linux platforms.
 
-
 ## Motivation
 
 I couldn't find such program online so I created my own with PyiCloud
@@ -28,10 +27,16 @@ Install using [pipx](https://github.com/pypa/pipx)
 ```sh
 pipx install git+https://github.com/romeq/isynclinux.git
 
-# Add `.git` to ignored folders (e.g. don't sync git to local device). Ignored folders are seperated by newlines (\n).
+# Ignoring folders from sync
+# - Option 1: Edit using CLI
+isynclinux ignore -e
+# - Option 2: Manual
 mkdir -p ~/.config/isynclinux
 echo ".git" > ~/.config/isynclinux/ignored_folders
 
-# Sync your iCloud to ~/iCloud
-isynclinux ~/iCloud
+# Syncing your iCloud to ~/iCloud
+isynclinux sync ~/iCloud
 ```
+
+## Caveats
+- Running `isynclinux ignore -e` reads the EDITOR environment variable and uses `os.system` to edit the file. EDITOR is not parsed to preserve the ability to run editors with custom flags and one may for example try to execute a custom application by running `EDITOR=\"./mydeviousapp; cat\" isynclinux ignore -e`. If $EDITOR envvar can't be found, `nano` is used as default editor.
