@@ -5,18 +5,16 @@
 > Updates are expected when I have free time.
 
 
-A simple (SLOC < 300) syncer for iCloud on Linux platforms.
+A simple python iCloud downloader for UNIX platforms.
 
 ## Motivation
-
-I couldn't find such program online so I created my own with PyiCloud
 
 ## Features
 - [x] Download current iCloud drive to a specific directory
 - [x] Respect `XDG_CONFIG_HOME`
 - [ ] Upload files
 - [ ] Remove files/directories that don't exist on server anymore
-- [ ] Automatic syncing (either event-based or by looping)
+- [ ] Automatic syncing (either event-based or by looping) / daemon
 - [ ] Virtual files support
 - [ ] For some reason the file discovery is slow as hell, so try to share the work between multiple threads
 
