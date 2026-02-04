@@ -2,6 +2,8 @@
 import sys
 import click
 from pyicloud import PyiCloudService
+from pyicloud.utils import delete_password_in_keyring
+from pyicloud.base import PyiCloudFailedLoginException
 import requests
 from rich.console import Console
 import os
@@ -50,6 +52,7 @@ def authenticate_2fa(api: PyiCloudService) -> int:
 def cli() -> None:
     pass
 
+
 @cli.command()
 @click.argument("sync_dir", envvar="ISYNCLINUX_DIR")
 @click.option("--verbose", "-v", flag_value=True, envvar="ISYNCLINUX_VERBOSE")
@@ -66,6 +69,11 @@ def sync(sync_dir: str, update_files: bool, verbose: bool):
     except requests.exceptions.ConnectionError:
         login_status.stop()
         richcl.log("[red]No internet connection")
+        sys.exit(1)
+    except PyiCloudFailedLoginException:
+        login_status.stop()
+        richcl.log("[red]Failed to log in")
+        richcl.log("isynclinux tried to log in with cached password. Maybe you've changed your password? ")
         sys.exit(1)
 
     try:
@@ -118,4 +126,21 @@ def ignore(verbose: bool, edit: bool):
     if verbose: richcl.log(f"Running '{editor} {ignored_folders_file}'")
     res = os.system(f"{editor} {ignored_folders_file}")
     if verbose: richcl.log(f"Result: {res}")
+
+
+@cli.command("keyring")
+@click.option("--reset-keyring", flag_value=True)
+def reset(reset_keyring: bool):
+    richcl = Console(highlight=False)
+    if not reset_keyring:
+        richcl.log("[orange]Pass --reset-keyring to reset your keyring")
+        return
+
+    username = input("Enter username to remove from keyring: ")
+    try:
+        delete_password_in_keyring(username)
+    except:
+        richcl.log(f"[red]Failed to remove {username} from keyring! Are you sure you typed the username correctly?")
+        return
+    richcl.log(f"[green]Removed {username} from keyring.")
 

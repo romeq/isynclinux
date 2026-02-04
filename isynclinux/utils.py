@@ -1,12 +1,19 @@
 from os.path import expanduser, isdir, isfile
 from os import environ, mkdir
 from getpass import getpass
+from pyicloud.utils import password_exists_in_keyring, store_password_in_keyring
 
 USERNAME_CACHE_FILE = ".cache.username"
 FILES_CACHE_FILE = ".cache.files"
 IGNORE_FILE = "ignored_folders"
 
-def get_input_or_fallback_file(prompt: str, fallback_file: str):
+
+# Returns full path for a config file
+def get_config_file(name: str) -> str:
+    return f"{config_dir()}/{name}"
+
+
+def read_file_or_input_and_create(prompt: str, fallback_file: str):
     try:
         f = open(fallback_file, "r")
         username = f.read()
@@ -31,10 +38,21 @@ def read_ignored_folders(ignore_file) -> list[str]:
         return []
 
 
+# Ask and potentially save user credinteals
 def get_credinteals():
+    # username
     username_file = get_config_file(USERNAME_CACHE_FILE)
-    username = get_input_or_fallback_file("Email: ", username_file)
-    return username, getpass(f"Password for {username}: ") if not isfile(username_file) else "-"
+    username = read_file_or_input_and_create("Email: ", username_file)
+
+    # password
+    password_exists = password_exists_in_keyring(username)
+    password: str | None = None
+    if not password_exists:
+        password = getpass(f"Password for {username}: ")
+        if input("Would you like to save your password to keychain? (Y/n): ").lower() != "n":
+            store_password_in_keyring(username, password)
+
+    return username, password
 
 
 def ask_yes_or_no(question_string: str, prefer_true: bool) -> bool:
@@ -65,5 +83,3 @@ def config_dir() -> str:
         return dir
         
 
-def get_config_file(name: str) -> str:
-    return f"{config_dir()}/{name}"

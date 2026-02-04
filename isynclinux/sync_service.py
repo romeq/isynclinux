@@ -110,7 +110,7 @@ class SyncService:
 
         status.stop()
         if new_files_downloaded == 0:
-            self.richcl.log(f"[green]You are already in sync! Use '--update' to download changes to existing files.")
+            self.richcl.log(f"[green]You are already in sync! Use '--update-files' to download changes to existing files.")
         else:
             if self.update:
                 self.richcl.log(f"[green]Update completed! {new_files_downloaded} files are now up-to-date.")
